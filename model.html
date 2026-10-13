@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}الموديل والبيانات{% endblock %}
+{% block content %}
+<h1>الموديل</h1>
+<p class="lead">موديل HistGradientBoosting يتوقع هل سيرتفع سعر BTCUSDT بعد {{ 30 }} دقيقة، اعتماداً على شموع دقيقة واحدة فقط.</p>
+
+<section class="cards">
+  <div class="card"><div class="k">عتبة الثقة</div><div class="v">{{ model.threshold }}</div></div>
+  <div class="card"><div class="k">عدد الأشجار</div><div class="v">{{ model.n_trees }}</div></div>
+  <div class="card"><div class="k">عدد المؤشرات</div><div class="v">{{ model.features|length }}</div></div>
+  <div class="card"><div class="k">نقطة التعادل</div><div class="v">{{ model.break_even }}%</div></div>
+</section>
+
+<h2>الهدف (Label)</h2>
+<p>{{ model.target }}</p>
+<p>القرار: إذا كان احتمال الصعود p ≥ 0.5 فالإشارة شراء، وإلا بيع. الإشارة تُنفذ فقط إذا كانت الثقة max(p, 1-p) ≥ {{ model.threshold }}، وصفقة واحدة كل 30 دقيقة.</p>
+
+<h2>إعدادات التدريب</h2>
+<table>
+  <tbody>
+  {% for k, v in model.params.items() %}
+    <tr><th>{{ k }}</th><td dir="ltr">{{ v }}</td></tr>
+  {% endfor %}
+    <tr><th>صفوف التدريب</th><td>{{ '{:,}'.format(model.train_rows) }}</td></tr>
+    <tr><th>آخر شمعة في التدريب</th><td dir="ltr">{{ model.train_end }}</td></tr>
+    <tr><th>فاصل الأمان</th><td>{{ model.gap_minutes }} دقيقة</td></tr>
+    <tr><th>الملف</th><td dir="ltr">{{ model.file }} ({{ model.size_kb }} KB)</td></tr>
+    <tr><th>SHA-256</th><td dir="ltr" class="mono">{{ model.sha256 }}</td></tr>
+  </tbody>
+</table>
+
+<h2>المؤشرات ({{ model.features|length }})</h2>
+<div class="chips">
+  {% for f in model.features %}<span class="chip" dir="ltr">{{ f }}</span>{% endfor %}
+</div>
+
+<h2>بيانات التدريب</h2>
+<section class="cards">
+  <div class="card"><div class="k">عدد الشموع</div><div class="v">{{ '{:,}'.format(data.rows) }}</div></div>
+  <div class="card"><div class="k">عدد الأيام</div><div class="v">{{ data.days|int }}</div></div>
+  <div class="card"><div class="k">متوسط الصفقات/دقيقة</div><div class="v">{{ data.avg_trades_per_min }}</div></div>
+  <div class="card"><div class="k">فجوات زمنية</div><div class="v">{{ data.gaps_missing_minutes }}</div></div>
+</section>
+<table>
+  <tbody>
+    <tr><th>المصدر</th><td>{{ data.source }}</td></tr>
+    <tr><th>من</th><td dir="ltr">{{ data.first_candle }}</td></tr>
+    <tr><th>إلى</th><td dir="ltr">{{ data.last_candle }}</td></tr>
+    <tr><th>سعر البداية / النهاية</th><td dir="ltr">{{ data.price_first }} → {{ data.price_last }}</td></tr>
+    <tr><th>أدنى / أعلى سعر</th><td dir="ltr">{{ data.price_min }} / {{ data.price_max }}</td></tr>
+    <tr><th>الأعمدة</th><td dir="ltr" class="mono">{{ data.columns|join(', ') }}</td></tr>
+  </tbody>
+</table>
+{% endblock %}

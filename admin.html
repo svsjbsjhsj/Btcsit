@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}المنطقة الخاصة{% endblock %}
+{% block content %}
+<h1>المنطقة الخاصة</h1>
+<p class="lead">ملفات الموديل المدرب. محمية بكلمة مرور.</p>
+{% if message %}<div class="notice">{{ message }}</div>{% endif %}
+
+<h2>الملفات</h2>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>الملف</th><th>الحجم</th><th>آخر تعديل</th><th>SHA-256</th><th></th></tr></thead>
+  <tbody>
+  {% for f in files %}
+    <tr>
+      <td dir="ltr">{{ f.name }}</td><td>{{ f.size_kb }} KB</td><td dir="ltr">{{ f.modified }}</td>
+      <td dir="ltr" class="mono">{{ f.sha256 }}</td>
+      <td><a href="{{ url_for('admin_download', name=f.name) }}">تحميل</a></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<h2>رفع نسخة جديدة من الموديل (.npz)</h2>
+<p class="muted">يتم فحص الملف قبل قبوله، ونسخة احتياطية من القديم تُحفظ تلقائياً.</p>
+<form method="post" action="{{ url_for('admin_upload') }}" enctype="multipart/form-data" class="upload">
+  <input type="file" name="model" accept=".npz" required>
+  <button type="submit">رفع</button>
+</form>
+{% endblock %}

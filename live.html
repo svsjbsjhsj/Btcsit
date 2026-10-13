@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}التحليل المباشر{% endblock %}
+{% block content %}
+<h1>التحليل المباشر</h1>
+<p class="lead">يتم جلب آخر شموع دقيقة مغلقة من Binance وحساب التوقع تلقائياً كل 15 ثانية.</p>
+
+<section id="now" class="now">
+  <div class="loading">جارٍ جلب البيانات...</div>
+</section>
+
+<h2>آخر 30 شمعة</h2>
+<div class="table-wrap">
+<table id="hist">
+  <thead><tr><th>الوقت (UTC)</th><th>السعر</th><th>الاتجاه المتوقع</th><th>احتمال الصعود</th><th>الثقة</th><th>إشارة</th></tr></thead>
+  <tbody></tbody>
+</table>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const fmt = (n, d=2) => Number(n).toLocaleString('en-US', {minimumFractionDigits: d, maximumFractionDigits: d});
+function render(d) {
+  if (d.error) {
+    document.getElementById('now').innerHTML = `<div class="err">${d.error}</div>`;
+    return;
+  }
+  const cls = d.signal ? (d.direction === 'صعود' ? 'up' : 'down') : 'neutral';
+  const sig = d.signal ? (d.direction === 'صعود' ? 'شراء ▲' : 'بيع ▼') : 'لا إشارة';
+  document.getElementById('now').innerHTML = `
+    <div class="big ${cls}">${sig}</div>
+    <div class="grid">
+      <div><span>السعر الحالي</span><b dir="ltr">${fmt(d.price)}</b></div>
+      <div><span>احتمال الصعود</span><b>${fmt(d.p_up*100)}%</b></div>
+      <div><span>الثقة</span><b>${fmt(d.confidence*100)}%</b></div>
+      <div><span>العتبة</span><b>${d.threshold}</b></div>
+      <div><span>آخر شمعة</span><b dir="ltr">${d.candle_time}</b></div>
+      <div><span>نقطة التعادل</span><b>${fmt(d.break_even*100)}%</b></div>
+    </div>
+    <p class="muted">التوقع لـ ${d.horizon_min} دقيقة قادمة. تم التحديث: ${new Date(d.fetched_at).toLocaleTimeString('ar')}</p>`;
+  const tb = document.querySelector('#hist tbody');
+  tb.innerHTML = d.history.map(r => `
+    <tr class="${r.signal ? 'hit' : ''}">
+      <td dir="ltr">${r.ts.slice(11,16)}</td>
+      <td dir="ltr">${fmt(r.price)}</td>
+      <td>${r.direction}</td>
+      <td>${fmt(r.p_up*100)}%</td>
+      <td>${fmt(r.confidence*100)}%</td>
+      <td>${r.signal ? '✔' : '—'}</td>
+    </tr>`).join('');
+}
+async function load() {
+  try {
+    const r = await fetch('/api/live', {cache: 'no-store'});
+    render(await r.json());
+  } catch (e) {
+    render({error: 'تعذر الاتصال بالخادم: ' + e});
+  }
+}
+load();
+setInterval(load, 15000);
+</script>
+{% endblock %}

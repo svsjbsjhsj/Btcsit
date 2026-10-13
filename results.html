@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}النتائج{% endblock %}
+{% block content %}
+<h1>النتائج</h1>
+<p class="lead">اختبار متدحرج شهرياً: كل شهر يُختبر بموديل مدرب على البيانات السابقة له فقط. payout {{ 83 }}%، نقطة التعادل {{ break_even }}%.</p>
+
+<form class="filters" method="get">
+  <label>النسخة
+    <select name="run" onchange="this.form.submit()">
+      {% for r in runs %}
+        <option value="{{ r.id }}" {{ 'selected' if r.id==run_id }}>{{ r.id }}{{ ' (الأحدث)' if loop.first }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>العتبة
+    <select name="th" onchange="this.form.submit()">
+      <option value="0.58" {{ 'selected' if threshold=='0.58' }}>0.58 (المرشح)</option>
+      <option value="0.60" {{ 'selected' if threshold=='0.60' }}>0.60 (بديل)</option>
+    </select>
+  </label>
+</form>
+
+{% if totals %}
+<section class="cards">
+  <div class="card"><div class="k">إجمالي الصفقات</div><div class="v">{{ '{:,}'.format(totals.trades) }}</div></div>
+  <div class="card"><div class="k">نسبة الفوز</div><div class="v">{{ totals.win_rate }}%</div></div>
+  <div class="card"><div class="k">الربح الصافي</div><div class="v {{ 'up' if totals.net>0 else 'down' }}">{{ '%+.1f'|format(totals.net) }}</div></div>
+</section>
+<h2>الربح التراكمي (وحدات)</h2>
+<div class="chart-wrap">{{ chart|safe }}</div>
+{% endif %}
+
+<h2>مقارنة النسخ (العتبة {{ threshold }})</h2>
+<table>
+  <thead><tr><th>النسخة</th><th>الصفقات</th><th>نسبة الفوز</th><th>الربح</th></tr></thead>
+  <tbody>
+  {% for c in comparison %}
+    <tr><td dir="ltr">{{ c.run }}</td><td>{{ '{:,}'.format(c.trades) }}</td><td>{{ c.win_rate }}%</td><td class="{{ 'up' if c.net>0 else 'down' }}">{{ '%+.1f'|format(c.net) }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<h2>النتائج الشهرية</h2>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>الشهر</th><th>الصفقات</th><th>الفوز</th><th>نسبة الفوز</th><th>الربح</th><th>التراكمي</th></tr></thead>
+  <tbody>
+  {% for r in monthly %}
+    <tr>
+      <td dir="ltr">{{ r.month }}</td><td>{{ r.trades }}</td><td>{{ r.wins }}</td>
+      <td>{{ r['win_rate_%'] }}%</td>
+      <td class="{{ 'up' if r.net_units|float>0 else 'down' }}">{{ '%+.1f'|format(r.net_units|float) }}</td>
+      <td>{{ '%.1f'|format(r.cumulative|float) }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+{% if summary %}
+<h2>ملخص نصف السنوي (النسخة القديمة)</h2>
+<table>
+  <thead><tr>{% for k in summary[0].keys() %}<th dir="ltr">{{ k }}</th>{% endfor %}</tr></thead>
+  <tbody>
+  {% for r in summary %}<tr>{% for v in r.values() %}<td dir="ltr">{{ v }}</td>{% endfor %}</tr>{% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}
